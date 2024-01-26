@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block main %}
+    <div class="main-container">
+        <div class="table-title">
+            <h2>Информация о приеме в корпусах для инфопанелей</h2>
+        </div>
+        <div class="table-data">
+            <table id="patient-table">
+                <thead>
+                <tr>
+                    <th>Подразделение</th>
+                    <th>Ссылка</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Корпус 1 - ГП №3</td>
+                    <td><a href="{% url 'k1' %}">Перейти</a></td>
+                </tr>
+                <tr>
+                    <td>Корпус 2 - ОАПП №1</td>
+                    <td><a href="{% url 'k2' %}">Перейти</a></td>
+                </tr>
+                <tr>
+                    <td>Корпус 3 - ГП №11</td>
+                    <td><a href="{% url 'k3' %}">Перейти</a></td>
+                </tr>
+                <tr>
+                    <td>Корпус 6 - ОАПП №2</td>
+                    <td><a href="{% url 'k6' %}">Перейти</a></td>
+                </tr>
+                <tr>
+                    <td>Женская консультация</td>
+                    <td><a href="{% url 'jk' %}">Перейти</a></td>
+                </tr>
+                <tr>
+                    <td>Детская поликлиника №1</td>
+                    <td><a href="{% url 'dp1' %}">Перейти</a></td>
+                </tr>
+                <tr>
+                    <td>Детская поликлиника №8</td>
+                    <td><a href="{% url 'dp8' %}">Перейти</a></td>
+                </tr>
+
+                </tbody>
+            </table>
+            <h5><a href="{% url 'upload_data' %}">Обновление данных</a></h5>
+        </div>
+    </div>
+
+
+{% endblock %}
+

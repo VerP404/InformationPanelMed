@@ -1,0 +1,110 @@
+body {
+    font-family: 'montserrat', sans-serif;
+    background: #4c4bc0;
+    /*background: #0d6efd;*/
+    color: white;
+}
+
+.header-grid {
+    display: flex;
+    justify-content: space-between; /* Равномерное распределение между элементами */
+    align-items: center; /* Выравнивание по вертикали по центру */
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-top: 30px;
+    font-size: 30px;
+}
+
+.logo {
+    flex: 1;
+    text-align: left;
+}
+
+.logo img {
+    width: 100px; /* Устанавливаем ширину логотипа в 50px */
+    height: 100px; /* Устанавливаем высоту логотипа в 50px */
+}
+
+.system-info {
+    flex: 2; /* Занимает равную часть доступного пространства */
+    text-align: center; /* Выравнивание текста по центру */
+}
+
+.update-info {
+    flex: 1; /* Занимает равную часть доступного пространства */
+    text-align: center; /* Выравнивание текста по центру */
+}
+
+.system-info .row, .update-info .row {
+  margin-bottom: 15px; /*между элементами*/
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.main-container {
+    background-color: #1f2c56;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 30px;
+    margin-left: 2%;
+    margin-right: 2%;
+    flex: 1;
+}
+
+.info-container {
+    background-color: #1f2c56;
+    border-radius: 10px;
+    position: fixed;
+    bottom: 50px;
+    left: 2%;
+    right: 2%;
+    padding: 15px;
+    text-align: center;
+    color: #02ff35;
+    font-size: 50px;
+}
+
+.table-title {
+    color: #3fa134;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 40px;
+}
+
+.table-title h2 {
+    margin: 5px;
+}
+
+.table-data {
+    width: 100%; /* Ширина таблицы 100% от родительского контейнера */
+    font-size: 35px;
+}
+
+.table-data table {
+    width: 100%; /* Ширина таблицы 100% от родительского контейнера */
+    border-collapse: collapse; /* Объединяем границы ячеек */
+    margin-bottom: 15px; /* Добавим отступ снизу для создания места между таблицей и следующим содержимым */
+}
+
+.table-data th, .table-data td {
+    /*border: 1px solid #ddd; !* Границы ячеек таблицы *!*/
+    padding: 8px; /* Внутренний отступ ячеек таблицы */
+    text-align: center; /* Выравнивание текста по левому краю */
+}
+
+.table-data th {
+  width: 25%; /* Ширина каждого заголовка столбца */
+}
+
+.table-data td {
+  width: 25%; /* Ширина каждой ячейки данных */
+}
+
+/* Добавляем стили для первой строки */
+.table-data thead tr th {
+  color: red; /* Устанавливаем красный цвет текста для заголовков столбцов в первой строке */
+}

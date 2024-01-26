@@ -1,0 +1,62 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'peopledash/css/peopledash.css' %}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+</head>
+
+<body>
+<header>
+    <div class="header-grid">
+
+        <div class="logo">
+            <a href="{% url 'home' %}">
+                <img src="{% static 'peopledash/img/logo-vgp3.png' %}" alt="Logo">
+            </a>
+
+        </div>
+        <div class="system-info">
+            <div class="row">БУЗ ВО ВГП №3</div>
+            <div class="row">{% block  titlesystem %}{% endblock %}</div>
+        </div>
+        <div class="update-info">
+            <div class="row row-report-datetime">Обновлено: {{ report_datetime }}</div>
+            <div class="row">
+                <div id="current-date-output"></div>
+                {% load static %}
+                <script src="{% static 'peopledash/js/datetime.js' %}"></script>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main>
+    {% block main %}
+    {% endblock %}
+</main>
+<script>
+    $(document).ready(function () {
+        function fetchData() {
+            // Получение данных для report_datetime
+            $.ajax({
+                url: '/get_report_datetime/',
+                type: 'GET',
+                success: function (data) {
+                    // Обновление значения report_datetime на странице
+                    $('.row-report-datetime').text('Обновлено: ' + data.report_datetime);
+                }
+            });
+        }
+        fetchData();
+        // Запуск обновления данных каждые 10 секунд
+        setInterval(fetchData, 60 * 1000);
+    });
+</script>
+</body>
+</html>
