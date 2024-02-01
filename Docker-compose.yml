@@ -1,13 +1,27 @@
 version: '3.8'
 
-
 services:
-  postgres-db:
+  postgres:
     image: postgres:latest
     container_name: postgres
     environment:
       POSTGRES_USER: prediction
       POSTGRES_PASSWORD: prediction
       POSTGRES_DB: prediction
+
+
+
+  informationpanelmed:
+    build:
+      context: .
     ports:
-      - "5433:5432"
+      - "8001:8000"
+    depends_on:
+      - postgres
+    environment:
+      DEBUG: "False"
+      DB_NAME: "prediction"
+      DB_USER: "prediction"
+      DB_PASSWORD: "prediction"
+      DB_HOST: "postgres"
+      DB_PORT: 5432
