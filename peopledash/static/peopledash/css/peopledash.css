@@ -21,8 +21,8 @@ body {
 }
 
 .logo img {
-    width: 100px; /* Устанавливаем ширину логотипа в 50px */
-    height: 100px; /* Устанавливаем высоту логотипа в 50px */
+    width: 100px;
+    height: 100px;
 }
 
 .system-info {
@@ -36,7 +36,7 @@ body {
 }
 
 .system-info .row, .update-info .row {
-  margin-bottom: 15px; /*между элементами*/
+    margin-bottom: 15px; /*между элементами*/
 }
 
 main {
@@ -97,14 +97,132 @@ main {
 }
 
 .table-data th {
-  width: 25%; /* Ширина каждого заголовка столбца */
+    width: 25%; /* Ширина каждого заголовка столбца */
 }
 
 .table-data td {
-  width: 25%; /* Ширина каждой ячейки данных */
+    width: 25%; /* Ширина каждой ячейки данных */
 }
 
 /* Добавляем стили для первой строки */
 .table-data thead tr th {
-  color: red; /* Устанавливаем красный цвет текста для заголовков столбцов в первой строке */
+    color: red; /* Устанавливаем красный цвет текста для заголовков столбцов в первой строке */
 }
+
+
+ /*Медиа-запросы для экранов с шириной до 1280px  1280 720 */
+@media screen and (max-width: 1280px){
+    .header-grid {
+        display: flex;
+        justify-content: space-between; /* Равномерное распределение между элементами */
+        align-items: center; /* Выравнивание по вертикали по центру */
+        margin-left: 5%;
+        margin-right: 5%;
+        margin-top: 20px;
+        font-size: 20px;
+    }
+
+    .logo img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .system-info .row, .update-info .row {
+        margin-bottom: 7px; /*между элементами*/
+    }
+
+    .main-container {
+        background-color: #1f2c56;
+        border-radius: 10px;
+        padding: 7px;
+        margin-top: 15px;
+        margin-left: 2%;
+        margin-right: 2%;
+        flex: 1;
+
+    }
+
+    .info-container {
+        background-color: #1f2c56;
+        border-radius: 10px;
+        position: fixed;
+        bottom: 25px;
+        left: 2%;
+        right: 2%;
+        padding: 7px;
+        text-align: center;
+        color: #02ff35;
+        font-size: 25px;
+    }
+
+    .table-title {
+        color: #3fa134;
+        text-align: center;
+        margin-bottom: 7px;
+        font-size: 23px;
+    }
+
+    .table-data {
+        width: 100%; /* Ширина таблицы 100% от родительского контейнера */
+        font-size: 23px;
+    }
+}
+
+/* Медиа-запросы для экранов с шириной до 980px */
+@media screen and (max-width: 980px) {
+    .header-grid {
+        display: flex;
+        justify-content: space-between; /* Равномерное распределение между элементами */
+        align-items: center; /* Выравнивание по вертикали по центру */
+        margin-left: 5%;
+        margin-right: 5%;
+        margin-top: 15px;
+        font-size: 15px;
+    }
+
+    .logo img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .system-info .row, .update-info .row {
+        margin-bottom: 5px; /*между элементами*/
+    }
+
+    .main-container {
+        background-color: #1f2c56;
+        border-radius: 10px;
+        padding: 5px;
+        margin-top: 10px;
+        margin-left: 2%;
+        margin-right: 2%;
+        flex: 1;
+
+    }
+
+    .info-container {
+        background-color: #1f2c56;
+        border-radius: 10px;
+        position: fixed;
+        bottom: 20px;
+        left: 2%;
+        right: 2%;
+        padding: 5px;
+        text-align: center;
+        color: #02ff35;
+        font-size: 25px;
+    }
+
+    .table-title {
+        color: #3fa134;
+        text-align: center;
+        margin-bottom: 5px;
+        font-size: 18px;
+    }
+
+    .table-data {
+        width: 100%; /* Ширина таблицы 100% от родительского контейнера */
+        font-size: 18px;
+    }
+}
+
