@@ -13,7 +13,7 @@ def index(request):
     context = {
         'report_datetime': report_datetime,
     }
-    return render(request, 'index.html', context)
+    return render(request, 'index_peopledash.html', context)
 
 
 def get_report_datetime(request):
@@ -206,11 +206,11 @@ def korpus_jk_get_data(request):
 def process_transformer_files(df_1, df_14, report_dt):
     # Список отслеживаемых должностей
     desired_positions = [
-        'врач-хирург', 'врач-дерматовенеролог',
+        'врач-хирург', 'врач-гериатр',
         'врач-оториноларинголог', 'врач-офтальмолог', 'врач-терапевт участковый',
         'врач общей практики (семейный врач)', 'врач-терапевт', 'врач-акушер-гинеколог',
         'врач-педиатр участковый', 'врач-педиатр',
-        'врач - детский хирург', 'врач-инфекционист'
+        'врач - детский хирург'
     ]
     # Словарь соответствия подразделения корпусам
     corpus_mapping = {
