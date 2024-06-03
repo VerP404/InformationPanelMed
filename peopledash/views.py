@@ -13,7 +13,7 @@ def index(request):
     context = {
         'report_datetime': report_datetime,
     }
-    return render(request, 'index_peopledash.html', context)
+    return render(request, 'index.html', context)
 
 
 def get_report_datetime(request):
