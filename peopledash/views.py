@@ -23,7 +23,7 @@ def get_report_datetime(request):
 
 
 def korpus_1(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="Корпус 1")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Поликлиника")
     first_record = RegisteredPatients.objects.first()
     report_datetime = first_record.report_datetime if first_record else None
     context = {
@@ -35,7 +35,7 @@ def korpus_1(request):
 
 
 def korpus_1_get_data(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="Корпус 1")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Поликлиника")
     data = []
     for row in data_from_db:
         data.append({
@@ -48,7 +48,7 @@ def korpus_1_get_data(request):
 
 
 def korpus_2(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="Корпус 2")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Детская поликлиника")
     first_record = RegisteredPatients.objects.first()
     report_datetime = first_record.report_datetime if first_record else None
     context = {
@@ -61,7 +61,7 @@ def korpus_2(request):
 
 
 def korpus_2_get_data(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="Корпус 2")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Детская поликлиника")
     data = []
     for row in data_from_db:
         data.append({
@@ -74,7 +74,7 @@ def korpus_2_get_data(request):
 
 
 def korpus_3(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="Корпус 3")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Яменская врачебная амбулатория")
     first_record = RegisteredPatients.objects.first()
     report_datetime = first_record.report_datetime if first_record else None
     context = {
@@ -87,7 +87,7 @@ def korpus_3(request):
 
 
 def korpus_3_get_data(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="Корпус 3")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Яменская врачебная амбулатория")
     data = []
     for row in data_from_db:
         data.append({
@@ -100,7 +100,7 @@ def korpus_3_get_data(request):
 
 
 def korpus_6(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="Корпус 6")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Новоживотинновская участковая больница")
     first_record = RegisteredPatients.objects.first()
     report_datetime = first_record.report_datetime if first_record else None
     context = {
@@ -113,7 +113,7 @@ def korpus_6(request):
 
 
 def korpus_6_get_data(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="Корпус 6")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Новоживотинновская участковая больница")
     data = []
     for row in data_from_db:
         data.append({
@@ -126,7 +126,7 @@ def korpus_6_get_data(request):
 
 
 def korpus_dp1(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="ДП 1")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Березовский ФАП")
     first_record = RegisteredPatients.objects.first()
     report_datetime = first_record.report_datetime if first_record else None
     context = {
@@ -139,7 +139,7 @@ def korpus_dp1(request):
 
 
 def korpus_dp1_get_data(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="ДП 1")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Березовский ФАП")
     data = []
     for row in data_from_db:
         data.append({
@@ -152,7 +152,7 @@ def korpus_dp1_get_data(request):
 
 
 def korpus_dp8(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="ДП 8")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Центр общей врачебной практики")
     first_record = RegisteredPatients.objects.first()
     report_datetime = first_record.report_datetime if first_record else None
     context = {
@@ -165,7 +165,7 @@ def korpus_dp8(request):
 
 
 def korpus_dp8_get_data(request):
-    data_from_db = RegisteredPatients.objects.filter(subdivision="ДП 8")
+    data_from_db = RegisteredPatients.objects.filter(subdivision="Центр общей врачебной практики")
     data = []
     for row in data_from_db:
         data.append({
@@ -214,58 +214,17 @@ def process_transformer_files(df_1, df_14, report_dt):
     ]
     # Словарь соответствия подразделения корпусам
     corpus_mapping = {
-        'Гериатрический кабинет отделения неотложной медицинской помощи 1, корпус 1 пер.Ботанический 47': 'Корпус 1',
-        'Городская поликлиника 11, Детская поликлиника 8, Консультативно-диагностическое отделение №1': 'ДП 8',
-        'Городская поликлиника 11, Детская поликлиника 8, Консультативно-диагностическое отделение №2': 'ДП 8',
-        'Городская поликлиника 11, Детская поликлиника 8, Корпус №7, ул Машиностроителей, 51, Профилактическое отделение': 'ДП 8',
-        'Городская поликлиника 11, Детская поликлиника 8, Отделение организации медицинской помощи детям в образовательных организациях, Медицинский персонал по обслуживанию детских садов': 'ДП 8',
-        'Городская поликлиника 11, Детская поликлиника 8, Центр охраны зрения детей (корпус №8, ул. Красных Зорь, 36)': 'ДП 8',
-        'Городская поликлиника 11, Корпус 3, ул Машиностроителей, 13б': 'Корпус 3',
-        'Городская поликлиника 11, Корпус 3, ул Машиностроителей, 13б, Дневной терапевтический стационар': 'Корпус 3',
-        'Городская поликлиника 11, Корпус 3, ул Машиностроителей, 13б, Консультативно-диагностическое отделение': 'Корпус 3',
-        'Городская поликлиника 11, Корпус 3, ул Машиностроителей, 13б, Отделение общей врачебной практики (семейной медицины) №1': 'Корпус 3',
-        'Городская поликлиника 11, Корпус 3, ул Машиностроителей, 13б, Отделение общей врачебной практики (семейной медицины) №4': 'Корпус 3',
-        'Городская поликлиника 11, Корпус 3, ул.Машиностроителей, 13Б Отделение акушерско-гинекологического профиля': 'Корпус 3',
-        'Городская поликлиника 3, Корпус 1, Отделение медицинской профилактики': 'Корпус 1',
-        'Городская поликлиника 3, Корпус 4 Отделение женской консультации ул Геращенко, 3, Акушерско-гинекологическое отделение': 'Женская консультация',
-        'Городская поликлиника 3, Отделение амбулаторно-поликлинической помощи №1, Корпус 2 (ул Шишкова, 71)': 'Корпус 2',
-        'Городская поликлиника 3, Отделение амбулаторно-поликлинической помощи №2, Корпус 6 (ул Остроухова, 1)': 'Корпус 6',
-        'Городская поликлиника 3, Отделение женской консультации (ул Геращенко, 3)': 'Женская консультация',
-        'ГП 11, ДП 8 (ул. Машиностроителей, 76)': 'ДП 8',
-        'ГП 3, ДП 1 (пер. Ботанический, 49)': 'ДП 1',
-        'ГП 3, ДП 1, Консультативно-диагностическое отделение №1': 'ДП 1',
-        'ГП 3, ДП 1, Консультативно-диагностическое отделение №2': 'ДП 1',
-        'ГП 3, ДП 1, Профилактическое отделение': 'ДП 1',
-        'ГП 3, ДП 1, Профилактическое отделение, Отделение организации медицинской помощи несовершеннолетним в образовательных организациях, Медицинский персонал по обслуживанию детских садов': 'ДП 1',
-        'ГП 3, ДП 1, Профилактическое отделение, Отделение организации медицинской помощи несовершеннолетним в образовательных организациях, Медицинский персонал по обслуживанию школ': 'ДП 1',
-        'ГП 3, ДП 1, Профилактическое отделение, Центр здоровья для детей (ЦЗ)': 'ДП 1',
-        'ГП 3, Корпус 1 , Общеполиклинический медицинский персонал': 'Корпус 1',
-        'ГП 3, корпус 1, ОНМП №1, Отделение неотложной медицинской помощи 1 Кабинет травматологии и ортопедии': 'Корпус 1',
-        'ГП 3, Корпус 1, Отделение дневного стационара': 'Корпус 1',
-        'ГП 3, Корпус 1, Отделение инструментально-диагностических методов исследования': 'Корпус 1',
-        'ГП 3, Корпус 1, Отделение общей врачебной практики (семейной медицины) №2': 'Корпус 1',
-        'ГП 3, Корпус 1, Отделение общей врачебной практики (семейной медицины) №3': 'Корпус 1',
-        'ГП 3, Корпус 1, Отделение первичной специализированной медицинской помощи': 'Корпус 1',
-        'ГП 3, Корпус 1, Хирургическое отделение': 'Корпус 1',
-        'ГП 3, Корпус 2 ул Шишкова, 71, Отделение общей врачебной практики (семейной медицины) №5': 'Корпус 2',
-        'ГП 3, Корпус 2, Отделение амбулаторо-поликлинической помощи №1, общеполиклиический медицинский персонал': 'Корпус 2',
-        'ГП11, Корпус №3, Кабинет инструментально-диагностических методов исследования': 'Корпус 3',
-        'Детская поликлиника 8 Консультативно-диагностическое отделение 1 Дневной стационар': 'ДП 8',
-        'Детская поликлиника №8, Консультативно-диагностическое отделение 1': 'ДП 8',
-        'ДП 1, Консультативно-диагностическое отделение 1, Дневной стационар': 'ДП 1',
-        'Кабинет медико-психологического консультирования': 'Корпус 1',
-        'Кабинет неотложной медицинской помощи отделения неотложной медицинской помощи 1, корпус 1 пер.Ботанический 47': 'Корпус 1',
-        'Общеучрежденческий медицинский персонал, Отдел экспертизы и контроля качества медицинской помощи;': 'рпус 1',
-        'Общеучрежденческий медицинский персонал, Отделение медицинской профилактики для взрослоых': 'Корпус 1',
-        'Общеучрежденческий медицинский персонал, Отделение медицинской профилактики для взрослых, Кабинет организации диспансеризации и профилактических медицинских осмотров Городской поликлиники №3': 'Корпус 1',
-        'Отделение организации медицинской помощи детям в образовательных учреждениях, Медицинский персонал по обслуживанию школ': 'Корпус 1',
-        'Психотерапевтический кабинет': 'Корпус 1',
-        'Центр медико-социальной поддержки беременных, оказавшихся в трудной жизненной ситуации': 'Женская консультация',
+        'ПОЛИКЛИНИКА': 'Поликлиника',
+        'Детская поликлиника': 'Детская поликлиника',
+        'ЯМЕНСКАЯ ВРАЧЕБНАЯ АМБУЛАТОРИЯ': 'Яменская врачебная амбулатория',
+        'НОВОЖИВОТИННОВСКАЯ УЧАСТКОВАЯ БОЛЬНИЦА': 'Новоживотинновская участковая больница',
+        'ФЕЛЬДШЕРСКО-АКУШЕРСКИЕ ПУНКТЫ, Березовский фельдшерско-акушерский пункт': 'Березовский ФАП',
+        'ЦЕНТР ОБЩЕЙ ВРАЧЕБНОЙ ПРАКТИКИ (СЕМЕЙНОЙ МЕДИЦИНЫ)': 'Центр общей врачебной практики',
     }
 
     def update_df(df):
         filtered_df = df[
-            (df['Наименование МО'] == 'БУЗ ВО "ВГП № 3"') &
+            (df['Наименование МО'] == 'БУЗ ВО "Рамонская РБ"') &
             (df['Тип приёма'] == 'Первичный прием') &
             (df['Наименование должности'].isin(desired_positions))
             ]
