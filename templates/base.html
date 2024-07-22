@@ -1,3 +1,4 @@
+{#base.html#}
 {% load static %}
 
 <!DOCTYPE html>
@@ -7,22 +8,18 @@
     <title>{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'peopledash/css/peopledash.css' %}">
     <script src="{% static 'peopledash/js/jquery-3.6.0.min.js' %}"></script>
-
-
 </head>
 
 <body>
 <header>
     <div class="header-grid">
-
         <div class="logo">
             <a href="{% url 'home' %}">
-                <img src="{% static 'peopledash/img/logo-ramon.png' %}" alt="Logo" style="width: 80px">
+                <img src="{{ organization.logo.url }}" alt="Logo">
             </a>
-
         </div>
         <div class="system-info">
-            <div class="row">БУЗ ВО Рамонская районная больница</div>
+            <div class="row">{{ organization.full_name }}</div>
             <div class="row">{% block  titlesystem %}{% endblock %}</div>
         </div>
         <div class="update-info">
