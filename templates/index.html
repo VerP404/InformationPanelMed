@@ -1,3 +1,4 @@
+<!-- index.html -->
 {% extends 'base.html' %}
 {% load static %}
 
@@ -15,36 +16,15 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td>Взрослая поликлиника</td>
-                    <td><a href="{% url 'k1' %}">Перейти</a></td>
-                </tr>
-                <tr>
-                    <td>Детская поликлиника</td>
-                    <td><a href="{% url 'k2' %}">Перейти</a></td>
-                </tr>
-                <tr>
-                    <td>Яменская врачебная амбулатория</td>
-                    <td><a href="{% url 'k3' %}">Перейти</a></td>
-                </tr>
-                <tr>
-                    <td>Новоживотинновская участковая больница</td>
-                    <td><a href="{% url 'k6' %}">Перейти</a></td>
-                </tr>
-                <tr>
-                    <td>Березовский ФАП</td>
-                    <td><a href="{% url 'jk' %}">Перейти</a></td>
-                </tr>
-                <tr>
-                    <td>Центр общей врачебной практики</td>
-                    <td><a href="{% url 'dp1' %}">Перейти</a></td>
-                </tr>
+                {% for page in pages %}
+                    <tr>
+                        <td>{{ page.title }}</td>
+                        <td><a href="{% url 'dynamic_page' page.path %}">Перейти</a></td>
+                    </tr>
+                {% endfor %}
                 </tbody>
             </table>
             <h5><a href="{% url 'upload_data' %}">Обновление данных</a></h5>
         </div>
     </div>
-
-
 {% endblock %}
-
