@@ -9,4 +9,5 @@ COPY . /code/
 
 CMD python manage.py migrate \
     && python manage.py collectstatic --noinput\
-    && python manage.py runserver 0.0.0.0:8000
+    && python manage.py shell < create_superuser.py \
+    && python manage.py runserver 0.0.0.0:8010
