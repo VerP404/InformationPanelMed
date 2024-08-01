@@ -1,10 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 import pandas as pd
 import io
 from .models import RegisteredPatients, Page, Building, Specialty, Organization
 from .forms import UploadDataForm
 from django.contrib import messages
+import numpy as np
 
 def index(request):
     organization = Organization.objects.first()
@@ -67,18 +68,15 @@ def process_transformer_files(df_1, df_14, report_dt):
                 (df['Тип приёма'] == 'Первичный прием') &
                 (df['Обособленное подразделение'].isin(filters)) &
                 (df['Наименование должности'].isin(specialties))
-                ].copy()
+            ].copy()
             if filtered_df.empty:
-                print(f"No data found for corpus {corpus} with filters {filters}.")
+                print(f"Нет данных для корпуса {corpus} с фильтрами {filters}.")
             else:
-                print(f"Filtered DataFrame for corpus {corpus}:")
-                print(filtered_df)
                 filtered_df['Обособленное подразделение'] = corpus
                 filtered_dfs.append(filtered_df)
 
-        if not filtered_dfs:  # If no data is found
-            print("No data found for the given filters.")
-            return pd.DataFrame()  # Return an empty DataFrame to avoid errors
+        if not filtered_dfs:
+            return pd.DataFrame()
 
         combined_df = pd.concat(filtered_dfs)
 
@@ -94,19 +92,19 @@ def process_transformer_files(df_1, df_14, report_dt):
 
     def union_df(gr_1, gr_14):
         if gr_1.empty and gr_14.empty:
-            print("Both dataframes are empty.")
-            return pd.DataFrame()  # Return an empty DataFrame to avoid errors
+            return pd.DataFrame()
 
         merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer', suffixes=('_14', '_1'))
-        merged_df[['Всего_14', 'Слоты свободные для записи_14', 'Всего_1', 'Слоты свободные для записи_1']] = merged_df[
-            ['Всего_14', 'Слоты свободные для записи_14', 'Всего_1', 'Слоты свободные для записи_1']
-        ].fillna(0)
+        merged_df = merged_df.fillna(0)
         merged_df['Всего_1'] = merged_df['Всего_1'].astype(int)
         merged_df['Слоты свободные для записи_1'] = merged_df['Слоты свободные для записи_1'].astype(int)
         merged_df['Дата и время обновления'] = report_dt.strftime('%H:%M %d.%m.%Y')
         return merged_df
 
     def save_registered_patients_from_dataframe(df):
+        if 'Обособленное подразделение' not in df.columns:
+            print("Колонка 'Обособленное подразделение' не найдена в DataFrame")
+            return
         RegisteredPatients.objects.all().delete()
         for index, row in df.iterrows():
             RegisteredPatients.objects.create(
@@ -119,12 +117,14 @@ def process_transformer_files(df_1, df_14, report_dt):
                 report_datetime=row['Дата и время обновления']
             )
 
-    data = union_df(update_df(df_1), update_df(df_14))
-    if not data.empty:  # Only save if data is not empty
+    gr_1 = update_df(df_1)
+    gr_14 = update_df(df_14)
+
+    data = union_df(gr_1, gr_14)
+    if not data.empty:
         save_registered_patients_from_dataframe(data)
     else:
         print("Нет данных для сохранения.")
-
 
 def upload_data(request):
     organization = Organization.objects.first()
@@ -133,12 +133,12 @@ def upload_data(request):
         form = UploadDataForm(request.POST, request.FILES)
         if form.is_valid():
             file_today = request.FILES['file_today']
-            file_buffer = io.BytesIO(file_today.read())
-            df_1 = pd.read_csv(file_buffer, encoding='cp1251', delimiter=';')
+            df_1 = pd.read_csv(io.BytesIO(file_today.read()), encoding='cp1251', delimiter=';')
+            print("Колонки в df_1:", df_1.columns)
 
             file_14_days = request.FILES['file_14_days']
-            file_buffer = io.BytesIO(file_14_days.read())
-            df_14 = pd.read_csv(file_buffer, encoding='cp1251', delimiter=';')
+            df_14 = pd.read_csv(io.BytesIO(file_14_days.read()), encoding='cp1251', delimiter=';')
+            print("Колонки в df_14:", df_14.columns)
 
             report_datetime = form.cleaned_data['report_datetime']
 
@@ -147,7 +147,6 @@ def upload_data(request):
             messages.success(request, 'Данные успешно сохранены')
 
             return redirect(request.META.get('HTTP_REFERER', 'upload_data'))
-
     else:
         form = UploadDataForm()
 
