@@ -1,11 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 import pandas as pd
 import io
 from .models import RegisteredPatients, Page, Building, Specialty, Organization
 from .forms import UploadDataForm
 from django.contrib import messages
-
+import numpy as np
 
 def index(request):
     organization = Organization.objects.first()
@@ -19,12 +19,10 @@ def index(request):
     }
     return render(request, 'index.html', context)
 
-
 def get_report_datetime(request):
     first_record = RegisteredPatients.objects.first()
     report_datetime = first_record.report_datetime if first_record else None
     return JsonResponse({'report_datetime': report_datetime})
-
 
 def dynamic_page(request, path):
     organization = Organization.objects.first()
@@ -41,7 +39,6 @@ def dynamic_page(request, path):
     }
     return render(request, 'peopledash/base_peopledash.html', context)
 
-
 def dynamic_page_get_data(request, path):
     page = get_object_or_404(Page, path=path)
     data_from_db = RegisteredPatients.objects.filter(subdivision=page.subdivision)
@@ -55,7 +52,6 @@ def dynamic_page_get_data(request, path):
         })
     return JsonResponse(data, safe=False)
 
-
 def process_transformer_files(df_1, df_14, report_dt):
     specialties = list(Specialty.objects.values_list('name', flat=True))
     organizations = list(Organization.objects.values_list('name', flat=True))
@@ -65,7 +61,6 @@ def process_transformer_files(df_1, df_14, report_dt):
         corpus_mapping[page.subdivision] = filters
 
     def update_df(df):
-        print(f"Обработка DataFrame: {df.shape}")
         filtered_dfs = []
         for corpus, filters in corpus_mapping.items():
             filtered_df = df[
@@ -88,44 +83,25 @@ def process_transformer_files(df_1, df_14, report_dt):
         combined_df['Всего'] = pd.to_numeric(combined_df['Всего'], errors='coerce')
         combined_df['Слоты свободные для записи'] = pd.to_numeric(combined_df['Слоты свободные для записи'], errors='coerce')
 
-        print("Перед группировкой, combined_df:")
-        print(combined_df.head())  # Печать первых нескольких строк для отладки
-
         grouped_df = combined_df.groupby(['Обособленное подразделение', 'Наименование должности']).agg({
             'Всего': 'sum',
             'Слоты свободные для записи': 'sum'
         }).reset_index()
 
-        print("После группировки, grouped_df:")
-        print(grouped_df.head())  # Печать первых нескольких строк для отладки
-
         return grouped_df
 
     def union_df(gr_1, gr_14):
-        print("Обработка объединения DataFrame:")
         if gr_1.empty and gr_14.empty:
             return pd.DataFrame()
 
-        print("gr_1:")
-        print(gr_1.head())
-
-        print("gr_14:")
-        print(gr_14.head())
-
-        try:
-            merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer', suffixes=('_14', '_1'))
-            merged_df = merged_df.fillna(0)
-            merged_df['Всего_1'] = merged_df['Всего_1'].astype(int)
-            merged_df['Слоты свободные для записи_1'] = merged_df['Слоты свободные для записи_1'].astype(int)
-            merged_df['Дата и время обновления'] = report_dt.strftime('%H:%M %d.%m.%Y')
-            print(f"Объединенный DataFrame: {merged_df.shape}")
-            return merged_df
-        except Exception as e:
-            print(f"Ошибка при объединении DataFrame: {e}")
-            raise
+        merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer', suffixes=('_14', '_1'))
+        merged_df = merged_df.fillna(0)
+        merged_df['Всего_1'] = merged_df['Всего_1'].astype(int)
+        merged_df['Слоты свободные для записи_1'] = merged_df['Слоты свободные для записи_1'].astype(int)
+        merged_df['Дата и время обновления'] = report_dt.strftime('%H:%M %d.%m.%Y')
+        return merged_df
 
     def save_registered_patients_from_dataframe(df):
-        print("Колонки в DataFrame для сохранения:", df.columns)
         if 'Обособленное подразделение' not in df.columns:
             print("Колонка 'Обособленное подразделение' не найдена в DataFrame")
             return
@@ -157,14 +133,12 @@ def upload_data(request):
         form = UploadDataForm(request.POST, request.FILES)
         if form.is_valid():
             file_today = request.FILES['file_today']
-            file_buffer = io.BytesIO(file_today.read())
-            df_1 = pd.read_csv(file_buffer, encoding='cp1251', delimiter=';')
-            print("Колонки в df_1:", df_1.columns)  # Отладочное сообщение
+            df_1 = pd.read_csv(io.BytesIO(file_today.read()), encoding='cp1251', delimiter=';')
+            print("Колонки в df_1:", df_1.columns)
 
             file_14_days = request.FILES['file_14_days']
-            file_buffer = io.BytesIO(file_14_days.read())
-            df_14 = pd.read_csv(file_buffer, encoding='cp1251', delimiter=';')
-            print("Колонки в df_14:", df_14.columns)  # Отладочное сообщение
+            df_14 = pd.read_csv(io.BytesIO(file_14_days.read()), encoding='cp1251', delimiter=';')
+            print("Колонки в df_14:", df_14.columns)
 
             report_datetime = form.cleaned_data['report_datetime']
 
@@ -173,7 +147,6 @@ def upload_data(request):
             messages.success(request, 'Данные успешно сохранены')
 
             return redirect(request.META.get('HTTP_REFERER', 'upload_data'))
-
     else:
         form = UploadDataForm()
 
