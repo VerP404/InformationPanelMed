@@ -71,31 +71,29 @@ def process_transformer_files(df_1, df_14, report_dt):
             if filtered_df.empty:
                 print(f"No data found for corpus {corpus} with filters {filters}.")
             else:
-                print(f"Filtered DataFrame for corpus {corpus}:")
-                print(filtered_df)
                 filtered_df['Обособленное подразделение'] = corpus
                 filtered_dfs.append(filtered_df)
 
         if not filtered_dfs:  # If no data is found
-            print("No data found for the given filters.")
             return pd.DataFrame()  # Return an empty DataFrame to avoid errors
 
         combined_df = pd.concat(filtered_dfs)
 
         combined_df['Всего'] = pd.to_numeric(combined_df['Всего'], errors='coerce')
-        combined_df['Слоты свободные для записи'] = pd.to_numeric(combined_df['Слоты свободные для записи'], errors='coerce')
+        combined_df['Слоты свободные для записи'] = pd.to_numeric(combined_df['Слоты свободные для записи'],
+                                                                  errors='coerce')
 
         grouped_df = combined_df.groupby(['Обособленное подразделение', 'Наименование должности']).agg({
             'Всего': 'sum',
             'Слоты свободные для записи': 'sum'
-        }).reset_index()
+        })
+        grouped_df = grouped_df.reset_index()
 
         return grouped_df
 
     def union_df(gr_1, gr_14):
         if gr_1.empty and gr_14.empty:
-            print("Both dataframes are empty.")
-            return pd.DataFrame()  # Return an empty DataFrame to avoid errors
+            return pd.DataFrame()
 
         merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer', suffixes=('_14', '_1'))
         merged_df[['Всего_14', 'Слоты свободные для записи_14', 'Всего_1', 'Слоты свободные для записи_1']] = merged_df[
@@ -120,7 +118,7 @@ def process_transformer_files(df_1, df_14, report_dt):
             )
 
     data = union_df(update_df(df_1), update_df(df_14))
-    if not data.empty:  # Only save if data is not empty
+    if not data.empty:
         save_registered_patients_from_dataframe(data)
     else:
         print("Нет данных для сохранения.")
