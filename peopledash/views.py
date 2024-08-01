@@ -76,9 +76,9 @@ def process_transformer_files(df_1, df_14, report_dt):
                 filtered_df['Обособленное подразделение'] = corpus
                 filtered_dfs.append(filtered_df)
 
-        if not filtered_dfs:
+        if not filtered_dfs:  # If no data is found
             print("No data found for the given filters.")
-            return pd.DataFrame()
+            return pd.DataFrame()  # Return an empty DataFrame to avoid errors
 
         combined_df = pd.concat(filtered_dfs)
 
@@ -95,7 +95,7 @@ def process_transformer_files(df_1, df_14, report_dt):
     def union_df(gr_1, gr_14):
         if gr_1.empty and gr_14.empty:
             print("Both dataframes are empty.")
-            return pd.DataFrame()
+            return pd.DataFrame()  # Return an empty DataFrame to avoid errors
 
         merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer', suffixes=('_14', '_1'))
         merged_df[['Всего_14', 'Слоты свободные для записи_14', 'Всего_1', 'Слоты свободные для записи_1']] = merged_df[
@@ -120,7 +120,7 @@ def process_transformer_files(df_1, df_14, report_dt):
             )
 
     data = union_df(update_df(df_1), update_df(df_14))
-    if not data.empty:
+    if not data.empty:  # Only save if data is not empty
         save_registered_patients_from_dataframe(data)
     else:
         print("Нет данных для сохранения.")
