@@ -92,7 +92,7 @@ def process_transformer_files(df_1, df_14, report_dt):
             'Всего': 'sum',
             'Слоты свободные для записи': 'sum'
         })
-        grouped_df = grouped_df.reset_index()
+        # grouped_df = grouped_df.reset_index()
 
         return grouped_df
 
