@@ -65,6 +65,7 @@ def process_transformer_files(df_1, df_14, report_dt):
         corpus_mapping[page.subdivision] = filters
 
     def update_df(df):
+        print(f"Обработка DataFrame: {df.shape}")
         filtered_dfs = []
         for corpus, filters in corpus_mapping.items():
             filtered_df = df[
@@ -72,45 +73,62 @@ def process_transformer_files(df_1, df_14, report_dt):
                 (df['Тип приёма'] == 'Первичный прием') &
                 (df['Обособленное подразделение'].isin(filters)) &
                 (df['Наименование должности'].isin(specialties))
-                ].copy()
+            ].copy()
             if filtered_df.empty:
-                print(f"No data found for corpus {corpus} with filters {filters}.")
+                print(f"Нет данных для корпуса {corpus} с фильтрами {filters}.")
             else:
                 filtered_df['Обособленное подразделение'] = corpus
                 filtered_dfs.append(filtered_df)
 
-        if not filtered_dfs:  # If no data is found
-            return pd.DataFrame()  # Return an empty DataFrame to avoid errors
+        if not filtered_dfs:
+            return pd.DataFrame()
 
         combined_df = pd.concat(filtered_dfs)
 
         combined_df['Всего'] = pd.to_numeric(combined_df['Всего'], errors='coerce')
-        combined_df['Слоты свободные для записи'] = pd.to_numeric(combined_df['Слоты свободные для записи'],
-                                                                  errors='coerce')
+        combined_df['Слоты свободные для записи'] = pd.to_numeric(combined_df['Слоты свободные для записи'], errors='coerce')
+
+        print("Перед группировкой, combined_df:")
+        print(combined_df.head())  # Печать первых нескольких строк для отладки
 
         grouped_df = combined_df.groupby(['Обособленное подразделение', 'Наименование должности']).agg({
             'Всего': 'sum',
             'Слоты свободные для записи': 'sum'
-        })
-        # grouped_df = grouped_df.reset_index()
+        }).reset_index()
+
+        print("После группировки, grouped_df:")
+        print(grouped_df.head())  # Печать первых нескольких строк для отладки
 
         return grouped_df
 
     def union_df(gr_1, gr_14):
+        print("Обработка объединения DataFrame:")
         if gr_1.empty and gr_14.empty:
             return pd.DataFrame()
 
-        merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer',
-                             suffixes=('_14', '_1'))
-        merged_df[['Всего_14', 'Слоты свободные для записи_14', 'Всего_1', 'Слоты свободные для записи_1']] = merged_df[
-            ['Всего_14', 'Слоты свободные для записи_14', 'Всего_1', 'Слоты свободные для записи_1']
-        ].fillna(0)
-        merged_df['Всего_1'] = merged_df['Всего_1'].astype(int)
-        merged_df['Слоты свободные для записи_1'] = merged_df['Слоты свободные для записи_1'].astype(int)
-        merged_df['Дата и время обновления'] = report_dt.strftime('%H:%M %d.%m.%Y')
-        return merged_df
+        print("gr_1:")
+        print(gr_1.head())
+
+        print("gr_14:")
+        print(gr_14.head())
+
+        try:
+            merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer', suffixes=('_14', '_1'))
+            merged_df = merged_df.fillna(0)
+            merged_df['Всего_1'] = merged_df['Всего_1'].astype(int)
+            merged_df['Слоты свободные для записи_1'] = merged_df['Слоты свободные для записи_1'].astype(int)
+            merged_df['Дата и время обновления'] = report_dt.strftime('%H:%M %d.%m.%Y')
+            print(f"Объединенный DataFrame: {merged_df.shape}")
+            return merged_df
+        except Exception as e:
+            print(f"Ошибка при объединении DataFrame: {e}")
+            raise
 
     def save_registered_patients_from_dataframe(df):
+        print("Колонки в DataFrame для сохранения:", df.columns)
+        if 'Обособленное подразделение' not in df.columns:
+            print("Колонка 'Обособленное подразделение' не найдена в DataFrame")
+            return
         RegisteredPatients.objects.all().delete()
         for index, row in df.iterrows():
             RegisteredPatients.objects.create(
@@ -123,12 +141,14 @@ def process_transformer_files(df_1, df_14, report_dt):
                 report_datetime=row['Дата и время обновления']
             )
 
-    data = union_df(update_df(df_1), update_df(df_14))
+    gr_1 = update_df(df_1)
+    gr_14 = update_df(df_14)
+
+    data = union_df(gr_1, gr_14)
     if not data.empty:
         save_registered_patients_from_dataframe(data)
     else:
-        print("Нет данных для сохранения.")  # Добавим отладочное сообщение
-
+        print("Нет данных для сохранения.")
 
 def upload_data(request):
     organization = Organization.objects.first()
@@ -139,10 +159,12 @@ def upload_data(request):
             file_today = request.FILES['file_today']
             file_buffer = io.BytesIO(file_today.read())
             df_1 = pd.read_csv(file_buffer, encoding='cp1251', delimiter=';')
+            print("Колонки в df_1:", df_1.columns)  # Отладочное сообщение
 
             file_14_days = request.FILES['file_14_days']
             file_buffer = io.BytesIO(file_14_days.read())
             df_14 = pd.read_csv(file_buffer, encoding='cp1251', delimiter=';')
+            print("Колонки в df_14:", df_14.columns)  # Отладочное сообщение
 
             report_datetime = form.cleaned_data['report_datetime']
 
