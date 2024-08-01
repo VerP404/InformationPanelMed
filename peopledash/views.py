@@ -6,6 +6,7 @@ from .models import RegisteredPatients, Page, Building, Specialty, Organization
 from .forms import UploadDataForm
 from django.contrib import messages
 
+
 def index(request):
     organization = Organization.objects.first()
     first_record = RegisteredPatients.objects.first()
@@ -18,10 +19,12 @@ def index(request):
     }
     return render(request, 'index.html', context)
 
+
 def get_report_datetime(request):
     first_record = RegisteredPatients.objects.first()
     report_datetime = first_record.report_datetime if first_record else None
     return JsonResponse({'report_datetime': report_datetime})
+
 
 def dynamic_page(request, path):
     organization = Organization.objects.first()
@@ -38,6 +41,7 @@ def dynamic_page(request, path):
     }
     return render(request, 'peopledash/base_peopledash.html', context)
 
+
 def dynamic_page_get_data(request, path):
     page = get_object_or_404(Page, path=path)
     data_from_db = RegisteredPatients.objects.filter(subdivision=page.subdivision)
@@ -50,6 +54,7 @@ def dynamic_page_get_data(request, path):
             'Слоты свободные для записи_14': row.free_slots_14_days,
         })
     return JsonResponse(data, safe=False)
+
 
 def process_transformer_files(df_1, df_14, report_dt):
     specialties = list(Specialty.objects.values_list('name', flat=True))
@@ -95,7 +100,8 @@ def process_transformer_files(df_1, df_14, report_dt):
         if gr_1.empty and gr_14.empty:
             return pd.DataFrame()
 
-        merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer', suffixes=('_14', '_1'))
+        merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer',
+                             suffixes=('_14', '_1'))
         merged_df[['Всего_14', 'Слоты свободные для записи_14', 'Всего_1', 'Слоты свободные для записи_1']] = merged_df[
             ['Всего_14', 'Слоты свободные для записи_14', 'Всего_1', 'Слоты свободные для записи_1']
         ].fillna(0)
@@ -121,7 +127,7 @@ def process_transformer_files(df_1, df_14, report_dt):
     if not data.empty:
         save_registered_patients_from_dataframe(data)
     else:
-        print("Нет данных для сохранения.")
+        print("Нет данных для сохранения.")  # Добавим отладочное сообщение
 
 
 def upload_data(request):
