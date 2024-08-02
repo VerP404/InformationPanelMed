@@ -191,3 +191,25 @@ main {
         font-size: 18px;
     }
 }
+
+/* Стили для ссылок внутри таблицы */
+.table-data td a {
+    color: white; /* Цвет текста */
+    text-decoration: none; /* Убирает подчеркивание */
+}
+
+.table-data td a:hover, .table-data td a:focus {
+    color: white; /* Цвет текста при наведении или фокусе */
+    text-decoration: none; /* Убирает подчеркивание при наведении или фокусе */
+}
+
+/* Стили для ссылок внутри таблицы и тега h5 */
+.table-data td a, .table-data h5 a {
+    color: white; /* Цвет текста */
+    text-decoration: none; /* Убирает подчеркивание */
+}
+
+.table-data td a:hover, .table-data td a:focus, .table-data h5 a:hover, .table-data h5 a:focus {
+    color: white; /* Цвет текста при наведении или фокусе */
+    text-decoration: none; /* Убирает подчеркивание при наведении или фокусе */
+}
