@@ -5,7 +5,6 @@ import io
 from .models import RegisteredPatients, Page, Building, Specialty, Organization
 from .forms import UploadDataForm
 from django.contrib import messages
-import numpy as np
 
 def index(request):
     organization = Organization.objects.first()
