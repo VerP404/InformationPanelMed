@@ -1,13 +1,3 @@
-body {
-    font-family: 'montserrat', sans-serif;
-    background: #4c4bc0;
-    color: white;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-
 header {
     flex: 0 0 auto;
 }
@@ -50,34 +40,6 @@ main {
     flex: 1 0 auto;
 }
 
-.main-container {
-    background-color: #1f2c56;
-    border-radius: 10px;
-    padding: 15px;
-    margin-top: 30px;
-    margin-left: 2%;
-    margin-right: 2%;
-}
-
-.info-container {
-    background-color: #1f2c56;
-    border-radius: 10px;
-    position: fixed;
-    bottom: 50px;
-    left: 2%;
-    right: 2%;
-    padding: 15px;
-    text-align: center;
-    color: #02ff35;
-    font-size: 50px;
-}
-
-.table-title {
-    color: #3fa134;
-    text-align: center;
-    margin-bottom: 15px;
-    font-size: 40px;
-}
 
 .table-title h2 {
     margin: 5px;
@@ -107,18 +69,6 @@ main {
     width: 25%;
 }
 
-.table-data thead tr th {
-    color: red;
-}
-
-.footer-text {
-    text-align: center;
-    color: white;
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    margin: 0;
-}
 
 /* Медиа-запросы для экранов с шириной до 1280px */
 @media screen and (max-width: 1280px) {
@@ -192,24 +142,3 @@ main {
     }
 }
 
-/* Стили для ссылок внутри таблицы */
-.table-data td a {
-    color: white; /* Цвет текста */
-    text-decoration: none; /* Убирает подчеркивание */
-}
-
-.table-data td a:hover, .table-data td a:focus {
-    color: white; /* Цвет текста при наведении или фокусе */
-    text-decoration: none; /* Убирает подчеркивание при наведении или фокусе */
-}
-
-/* Стили для ссылок внутри таблицы и тега h5 */
-.table-data td a, .table-data h5 a {
-    color: white; /* Цвет текста */
-    text-decoration: none; /* Убирает подчеркивание */
-}
-
-.table-data td a:hover, .table-data td a:focus, .table-data h5 a:hover, .table-data h5 a:focus {
-    color: white; /* Цвет текста при наведении или фокусе */
-    text-decoration: none; /* Убирает подчеркивание при наведении или фокусе */
-}

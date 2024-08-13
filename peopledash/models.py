@@ -110,6 +110,18 @@ class Organization(models.Model):
                             verbose_name='Название из файла Статистики Квазар для фильтрации')
     full_name = models.CharField(max_length=255, verbose_name='Название для отображения в заголовке дашборда')
     logo = models.ImageField(upload_to='organization_logos/', verbose_name='Логотип')
+    # Кастомизация страниц
+    background_color = models.CharField(max_length=7, default='#4c4bc0', verbose_name='Цвет фона сайта')
+    text_color = models.CharField(max_length=7, default='white', verbose_name='Цвет текста в таблицах и блоке header')
+    main_container_color = models.CharField(max_length=7, default='#1f2c56',
+                                            verbose_name='Цвет фона контейнера с данными')
+    info_container_color = models.CharField(max_length=7, default='#1f2c56',
+                                            verbose_name='Цвет фона контейнера с доп. информацией')
+    info_container_texy_color = models.CharField(max_length=7, default='#02ff35',
+                                                 verbose_name='Цвет текста контейнера с доп. информацией')
+    header_background_color = models.CharField(max_length=7, default='#3fa134',
+                                               verbose_name='Цвет текста названий таблиц')
+    table_header_color = models.CharField(max_length=7, default='red', verbose_name='Цвет заголовков таблиц')
 
     def __str__(self):
         return self.name
@@ -117,5 +129,3 @@ class Organization(models.Model):
     class Meta:
         verbose_name = 'Организация'
         verbose_name_plural = 'Организация'
-
-

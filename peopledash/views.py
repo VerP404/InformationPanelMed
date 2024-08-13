@@ -193,6 +193,7 @@ def process_transformer_files(report_dt):
 
 
 def upload_data(request):
+    organization = Organization.objects.first()
     if request.method == 'POST':
         form = UploadDataForm(request.POST, request.FILES)
         if form.is_valid():
@@ -233,4 +234,4 @@ def upload_data(request):
     else:
         form = UploadDataForm()
 
-    return render(request, 'peopledash/upload_data.html', {'form': form})
+    return render(request, 'peopledash/upload_data.html', {'form': form, 'organization': organization})
