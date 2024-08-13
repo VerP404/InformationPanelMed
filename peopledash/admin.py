@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-
+from django.db import models
 from .models import Building, Subdivision, Specialty, Page, RegisteredPatients, Organization
 
 
@@ -8,7 +8,10 @@ class SubdivisionInline(admin.TabularInline):
     model = Subdivision
     extra = 1
     verbose_name = "Подразделение"
-    verbose_name_plural = "Подразделения"
+    verbose_name_plural = "Список подразделений из статистики квазара, относящихся к выбранному корпусу"
+    formfield_overrides = {
+        models.CharField: {'widget': admin.widgets.AdminTextInputWidget(attrs={'style': 'width: 500px;'})},
+    }
 
 
 @admin.register(Building)
@@ -18,15 +21,6 @@ class BuildingAdmin(admin.ModelAdmin):
     inlines = [SubdivisionInline]
     verbose_name = "Корпус"
     verbose_name_plural = "Корпуса"
-
-
-@admin.register(Subdivision)
-class SubdivisionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'building')
-    list_filter = ('building',)
-    search_fields = ('name', 'building__name')
-    verbose_name = "Подразделение"
-    verbose_name_plural = "Подразделения"
 
 
 @admin.register(Specialty)
@@ -49,8 +43,9 @@ class PageAdmin(admin.ModelAdmin):
 @admin.register(RegisteredPatients)
 class RegisteredPatientsAdmin(admin.ModelAdmin):
     list_display = (
-    'subdivision', 'speciality', 'slots_today', 'free_slots_today', 'slots_14_days', 'free_slots_14_days',
-    'report_datetime')
+        'subdivision', 'speciality', 'slots_today', 'free_slots_today', 'slots_14_days', 'free_slots_14_days',
+        'report_datetime'
+    )
     search_fields = ('subdivision', 'speciality', 'report_datetime')
     verbose_name = "Зарегистрированный пациент"
     verbose_name_plural = "Зарегистрированные пациенты"

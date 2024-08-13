@@ -1,6 +1,4 @@
-{#base.html#}
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -14,19 +12,22 @@
 <header>
     <div class="header-grid">
         <div class="logo">
-            <a href="{% url 'home' %}">
-                <img src="{{ organization.logo.url }}" alt="Logo">
-            </a>
+            {% if request.path == '/upload_data/' %}
+                <a href="{% url 'home' %}" style="text-decoration: none; color: white;">На главную</a>
+            {% else %}
+                <a href="{% url 'home' %}">
+                    <img src="{{ organization.logo.url }}" alt="Logo">
+                </a>
+            {% endif %}
         </div>
         <div class="system-info">
             <div class="row">{{ organization.full_name }}</div>
-            <div class="row">{% block  titlesystem %}{% endblock %}</div>
+            <div class="row">{% block titlesystem %}{% endblock %}</div>
         </div>
         <div class="update-info">
             <div class="row row-report-datetime">Обновлено: {{ report_datetime }}</div>
             <div class="row">
                 <div id="current-date-output"></div>
-                {% load static %}
                 <script src="{% static 'peopledash/js/datetime.js' %}"></script>
             </div>
         </div>
@@ -51,7 +52,7 @@
             });
         }
         fetchData();
-        // Запуск обновления данных каждые 10 секунд
+        // Запуск обновления данных каждые 60 секунд
         setInterval(fetchData, 60 * 1000);
     });
 </script>

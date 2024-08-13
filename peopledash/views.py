@@ -2,9 +2,11 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 import pandas as pd
 import io
-from .models import RegisteredPatients, Page, Building, Specialty, Organization
+from .models import RegisteredPatients, TodayData, FourteenDaysData, Page, Building, Specialty, Organization
 from .forms import UploadDataForm
 from django.contrib import messages
+import datetime
+
 
 def index(request):
     organization = Organization.objects.first()
@@ -18,10 +20,12 @@ def index(request):
     }
     return render(request, 'index.html', context)
 
+
 def get_report_datetime(request):
     first_record = RegisteredPatients.objects.first()
     report_datetime = first_record.report_datetime if first_record else None
     return JsonResponse({'report_datetime': report_datetime})
+
 
 def dynamic_page(request, path):
     organization = Organization.objects.first()
@@ -38,6 +42,7 @@ def dynamic_page(request, path):
     }
     return render(request, 'peopledash/base_peopledash.html', context)
 
+
 def dynamic_page_get_data(request, path):
     page = get_object_or_404(Page, path=path)
     data_from_db = RegisteredPatients.objects.filter(subdivision=page.subdivision)
@@ -50,6 +55,7 @@ def dynamic_page_get_data(request, path):
             'Слоты свободные для записи_14': row.free_slots_14_days,
         })
     return JsonResponse(data, safe=False)
+
 
 def process_transformer_files(df_1, df_14, report_dt):
     specialties = list(Specialty.objects.values_list('name', flat=True))
@@ -67,7 +73,7 @@ def process_transformer_files(df_1, df_14, report_dt):
                 (df['Тип приёма'] == 'Первичный прием') &
                 (df['Обособленное подразделение'].isin(filters)) &
                 (df['Наименование должности'].isin(specialties))
-            ].copy()
+                ].copy()
             if filtered_df.empty:
                 print(f"Нет данных для корпуса {corpus} с фильтрами {filters}.")
             else:
@@ -80,7 +86,8 @@ def process_transformer_files(df_1, df_14, report_dt):
         combined_df = pd.concat(filtered_dfs)
 
         combined_df['Всего'] = pd.to_numeric(combined_df['Всего'], errors='coerce')
-        combined_df['Слоты свободные для записи'] = pd.to_numeric(combined_df['Слоты свободные для записи'], errors='coerce')
+        combined_df['Слоты свободные для записи'] = pd.to_numeric(combined_df['Слоты свободные для записи'],
+                                                                  errors='coerce')
 
         grouped_df = combined_df.groupby(['Обособленное подразделение', 'Наименование должности']).agg({
             'Всего': 'sum',
@@ -93,7 +100,8 @@ def process_transformer_files(df_1, df_14, report_dt):
         if gr_1.empty and gr_14.empty:
             return pd.DataFrame()
 
-        merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer', suffixes=('_14', '_1'))
+        merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer',
+                             suffixes=('_14', '_1'))
         merged_df = merged_df.fillna(0)
         merged_df['Всего_1'] = merged_df['Всего_1'].astype(int)
         merged_df['Слоты свободные для записи_1'] = merged_df['Слоты свободные для записи_1'].astype(int)
@@ -125,9 +133,8 @@ def process_transformer_files(df_1, df_14, report_dt):
     else:
         print("Нет данных для сохранения.")
 
-def upload_data(request):
-    organization = Organization.objects.first()
 
+def upload_data(request):
     if request.method == 'POST':
         form = UploadDataForm(request.POST, request.FILES)
         if form.is_valid():
@@ -151,5 +158,4 @@ def upload_data(request):
 
     return render(request, 'peopledash/upload_data.html', {
         'form': form,
-        'organization': organization
     })
