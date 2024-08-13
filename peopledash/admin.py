@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.db import models
-from .models import Building, Subdivision, Specialty, Page, RegisteredPatients, Organization
+from .models import Building, Subdivision, Specialty, Page, RegisteredPatients, Organization, FourteenDaysData, \
+    TodayData
 
 
 class SubdivisionInline(admin.TabularInline):
@@ -62,3 +63,23 @@ class OrganizationAdmin(admin.ModelAdmin):
         return "(No logo)"
 
     logo_preview.short_description = "Предпросмотр логотипа"
+
+
+@admin.register(FourteenDaysData)
+class FourteenDaysDataAdmin(admin.ModelAdmin):
+    list_display = (
+    'organization', 'subdivision', 'speciality', 'doctor_name', 'reception_type', 'total_slots', 'epgu_slots',
+    'free_slots', 'free_epgu_slots', 'report_datetime')
+    search_fields = ('organization', 'subdivision', 'speciality', 'doctor_name', 'report_datetime')
+    verbose_name = "Данные за 14 дней"
+    verbose_name_plural = "Данные за 14 дней"
+
+
+@admin.register(TodayData)
+class TodayDataAdmin(admin.ModelAdmin):
+    list_display = (
+    'organization', 'subdivision', 'speciality', 'doctor_name', 'reception_type', 'total_slots', 'epgu_slots',
+    'free_slots', 'free_epgu_slots', 'report_datetime')
+    search_fields = ('organization', 'subdivision', 'speciality', 'doctor_name', 'report_datetime')
+    verbose_name = "Данные за сегодня"
+    verbose_name_plural = "Данные за сегодня"
