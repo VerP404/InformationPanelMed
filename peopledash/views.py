@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 import pandas as pd
@@ -58,78 +59,75 @@ def dynamic_page_get_data(request, path):
 
 
 def process_transformer_files(df_1, df_14, report_dt):
+    # Получение всех специальностей и организаций
     specialties = list(Specialty.objects.values_list('name', flat=True))
     organizations = list(Organization.objects.values_list('name', flat=True))
+
+    # Маппинг корпуса и фильтров
     corpus_mapping = {}
     for page in Page.objects.all():
         filters = list(page.building.subdivisions.values_list('name', flat=True))
         corpus_mapping[page.subdivision] = filters
 
-    def update_df(df):
-        filtered_dfs = []
-        for corpus, filters in corpus_mapping.items():
-            filtered_df = df[
-                (df['Наименование МО'].isin(organizations)) &
-                (df['Тип приёма'] == 'Первичный прием') &
-                (df['Обособленное подразделение'].isin(filters)) &
-                (df['Наименование должности'].isin(specialties))
-                ].copy()
-            if filtered_df.empty:
-                print(f"Нет данных для корпуса {corpus} с фильтрами {filters}.")
+    def update_db(model):
+        # Фильтрация и агрегация данных
+        aggregated_data = model.objects.filter(
+            organization__in=organizations,
+            reception_type='Первичный прием',
+            subdivision__in=corpus_mapping.keys(),
+            speciality__in=specialties
+        ).values(
+            'subdivision',
+            'speciality'
+        ).annotate(
+            total=Sum('total_slots'),
+            free_slots=Sum('free_slots')
+        )
+
+        return aggregated_data
+
+    def union_data(data_1, data_14):
+        # Соединение данных на уровне Python
+        result = []
+        for item_14 in data_14:
+            matching_items = [item for item in data_1 if item['subdivision__building__subdivision'] == item_14[
+                'subdivision__building__subdivision'] and item['speciality__name'] == item_14['speciality__name']]
+            if matching_items:
+                item_1 = matching_items[0]
+                result.append({
+                    'subdivision': item_14['subdivision__building__subdivision'],
+                    'speciality': item_14['speciality__name'],
+                    'slots_today': item_1['total'],
+                    'free_slots_today': item_1['free_slots'],
+                    'slots_14_days': item_14['total'],
+                    'free_slots_14_days': item_14['free_slots'],
+                    'report_datetime': report_dt
+                })
             else:
-                filtered_df['Обособленное подразделение'] = corpus
-                filtered_dfs.append(filtered_df)
+                result.append({
+                    'subdivision': item_14['subdivision__building__subdivision'],
+                    'speciality': item_14['speciality__name'],
+                    'slots_today': 0,
+                    'free_slots_today': 0,
+                    'slots_14_days': item_14['total'],
+                    'free_slots_14_days': item_14['free_slots'],
+                    'report_datetime': report_dt
+                })
+        return result
 
-        if not filtered_dfs:
-            return pd.DataFrame()
-
-        combined_df = pd.concat(filtered_dfs)
-
-        combined_df['Всего'] = pd.to_numeric(combined_df['Всего'], errors='coerce')
-        combined_df['Слоты свободные для записи'] = pd.to_numeric(combined_df['Слоты свободные для записи'],
-                                                                  errors='coerce')
-
-        grouped_df = combined_df.groupby(['Обособленное подразделение', 'Наименование должности']).agg({
-            'Всего': 'sum',
-            'Слоты свободные для записи': 'sum'
-        }).reset_index()
-
-        return grouped_df
-
-    def union_df(gr_1, gr_14):
-        if gr_1.empty and gr_14.empty:
-            return pd.DataFrame()
-
-        merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer',
-                             suffixes=('_14', '_1'))
-        merged_df = merged_df.fillna(0)
-        merged_df['Всего_1'] = merged_df['Всего_1'].astype(int)
-        merged_df['Слоты свободные для записи_1'] = merged_df['Слоты свободные для записи_1'].astype(int)
-        merged_df['Дата и время обновления'] = report_dt.strftime('%H:%M %d.%m.%Y')
-        return merged_df
-
-    def save_registered_patients_from_dataframe(df):
-        if 'Обособленное подразделение' not in df.columns:
-            print("Колонка 'Обособленное подразделение' не найдена в DataFrame")
-            return
+    def save_registered_patients(data):
         RegisteredPatients.objects.all().delete()
-        for index, row in df.iterrows():
-            RegisteredPatients.objects.create(
-                subdivision=row['Обособленное подразделение'],
-                speciality=row['Наименование должности'],
-                slots_today=row['Всего_1'],
-                free_slots_today=row['Слоты свободные для записи_1'],
-                slots_14_days=row['Всего_14'],
-                free_slots_14_days=row['Слоты свободные для записи_14'],
-                report_datetime=row['Дата и время обновления']
-            )
+        RegisteredPatients.objects.bulk_create([RegisteredPatients(**row) for row in data])
 
-    gr_1 = update_df(df_1)
-    gr_14 = update_df(df_14)
+    # Обработка данных для сегодня и за 14 дней
+    data_1 = update_db(TodayData)
+    data_14 = update_db(FourteenDaysData)
 
-    data = union_df(gr_1, gr_14)
-    if not data.empty:
-        save_registered_patients_from_dataframe(data)
+    # Объединение данных
+    final_data = union_data(data_1, data_14)
+
+    if final_data:
+        save_registered_patients(final_data)
     else:
         print("Нет данных для сохранения.")
 
@@ -140,11 +138,9 @@ def upload_data(request):
         if form.is_valid():
             file_today = request.FILES['file_today']
             df_1 = pd.read_csv(io.BytesIO(file_today.read()), encoding='cp1251', delimiter=';')
-            print("Колонки в df_1:", df_1.columns)
 
             file_14_days = request.FILES['file_14_days']
             df_14 = pd.read_csv(io.BytesIO(file_14_days.read()), encoding='cp1251', delimiter=';')
-            print("Колонки в df_14:", df_14.columns)
 
             report_datetime = form.cleaned_data['report_datetime']
 
