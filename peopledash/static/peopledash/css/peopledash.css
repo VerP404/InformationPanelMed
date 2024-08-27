@@ -69,6 +69,7 @@ main {
     width: 25%;
 }
 
+
 /* Медиа-запросы для экранов с шириной до 1280px */
 @media screen and (max-width: 1280px) {
     .header-grid {
@@ -101,17 +102,6 @@ main {
     }
 
     .table-data {
-        font-size: 23px;
-    }
-
-    .main-container .table-title {
-        margin-bottom: 7px;
-        font-size: 23px;
-    }
-
-    .info-container {
-        bottom: 25px;
-        padding: 7px;
         font-size: 23px;
     }
 }
