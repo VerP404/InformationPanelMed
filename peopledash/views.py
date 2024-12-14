@@ -1,10 +1,12 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse, HttpResponse
 import pandas as pd
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
 import io
-from .models import RegisteredPatients, Page, Building, Specialty, Organization
+from .models import RegisteredPatients, TodayData, FourteenDaysData, Page, Building, Specialty, Organization
 from .forms import UploadDataForm
 from django.contrib import messages
+import datetime
+
 
 def index(request):
     organization = Organization.objects.first()
@@ -18,10 +20,12 @@ def index(request):
     }
     return render(request, 'index.html', context)
 
+
 def get_report_datetime(request):
     first_record = RegisteredPatients.objects.first()
     report_datetime = first_record.report_datetime if first_record else None
     return JsonResponse({'report_datetime': report_datetime})
+
 
 def dynamic_page(request, path):
     organization = Organization.objects.first()
@@ -38,6 +42,7 @@ def dynamic_page(request, path):
     }
     return render(request, 'peopledash/base_peopledash.html', context)
 
+
 def dynamic_page_get_data(request, path):
     page = get_object_or_404(Page, path=path)
     data_from_db = RegisteredPatients.objects.filter(subdivision=page.subdivision)
@@ -51,7 +56,63 @@ def dynamic_page_get_data(request, path):
         })
     return JsonResponse(data, safe=False)
 
-def process_transformer_files(df_1, df_14, report_dt):
+
+def clean_and_validate_data(df):
+    organizations = list(Organization.objects.values_list('name', flat=True))
+    df = df[(df['Наименование МО'].isin(organizations)) & (df['Тип приёма'] == 'Первичный прием')]
+
+    df = df.dropna(
+        subset=['Всего', 'в т.ч. слоты для ЕПГУ (создано)', 'Слоты свободные для записи', 'в т.ч. свободные для ЕПГУ'])
+
+    numeric_columns = ['Всего', 'в т.ч. слоты для ЕПГУ (создано)', 'Слоты свободные для записи',
+                       'в т.ч. свободные для ЕПГУ']
+    for column in numeric_columns:
+        df[column] = df[column].apply(lambda x: int(x) if str(x).isdigit() else 0)
+
+    return df
+
+
+def save_today_data(df, report_dt):
+    TodayData.objects.all().delete()
+
+    df = clean_and_validate_data(df)
+
+    for index, row in df.iterrows():
+        TodayData.objects.create(
+            organization=row['Наименование МО'],
+            subdivision=row['Обособленное подразделение'],
+            speciality=row['Наименование должности'],
+            doctor_name=row['Врач'],
+            reception_type=row['Тип приёма'],
+            total_slots=row['Всего'],
+            epgu_slots=row['в т.ч. слоты для ЕПГУ (создано)'],
+            free_slots=row['Слоты свободные для записи'],
+            free_epgu_slots=row['в т.ч. свободные для ЕПГУ'],
+            report_datetime=report_dt
+        )
+
+
+def save_fourteen_days_data(df, report_dt):
+    FourteenDaysData.objects.all().delete()
+
+    df = clean_and_validate_data(df)
+
+    for index, row in df.iterrows():
+        FourteenDaysData.objects.create(
+            organization=row['Наименование МО'],
+            subdivision=row['Обособленное подразделение'],
+            speciality=row['Наименование должности'],
+            doctor_name=row['Врач'],
+            reception_type=row['Тип приёма'],
+            total_slots=row['Всего'],
+            epgu_slots=row['в т.ч. слоты для ЕПГУ (создано)'],
+            free_slots=row['Слоты свободные для записи'],
+            free_epgu_slots=row['в т.ч. свободные для ЕПГУ'],
+            report_datetime=report_dt
+        )
+
+
+def process_transformer_files(report_dt):
     specialties = list(Specialty.objects.values_list('name', flat=True))
     organizations = list(Organization.objects.values_list('name', flat=True))
     corpus_mapping = {}
@@ -59,99 +120,118 @@ def process_transformer_files(df_1, df_14, report_dt):
         filters = list(page.building.subdivisions.values_list('name', flat=True))
         corpus_mapping[page.subdivision] = filters
 
-    def update_df(df):
-        filtered_dfs = []
-        for corpus, filters in corpus_mapping.items():
-            filtered_df = df[
-                (df['Наименование МО'].isin(organizations)) &
-                (df['Тип приёма'] == 'Первичный прием') &
-                (df['Обособленное подразделение'].isin(filters)) &
-                (df['Наименование должности'].isin(specialties))
-                ].copy()
-            if filtered_df.empty:
-                print(f"No data found for corpus {corpus} with filters {filters}.")
-            else:
-                print(f"Filtered DataFrame for corpus {corpus}:")
-                print(filtered_df)
-                filtered_df['Обособленное подразделение'] = corpus
-                filtered_dfs.append(filtered_df)
+    def filter_and_group(model):
+        result = []
+        records = model.objects.filter(
+            organization__in=organizations,
+            reception_type='Первичный прием',
+            speciality__in=specialties
+        )
+        for record in records:
+            for corpus, filters in corpus_mapping.items():
+                if record.subdivision in filters:
+                    result.append({
+                        'Обособленное подразделение': corpus,
+                        'Наименование должности': record.speciality,
+                        'Всего': record.total_slots,
+                        'Слоты свободные для записи': record.free_slots
+                    })
+        return result
 
-        if not filtered_dfs:  # If no data is found
-            print("No data found for the given filters.")
-            return pd.DataFrame()  # Return an empty DataFrame to avoid errors
+    def aggregate_data(data):
+        aggregated = {}
+        for item in data:
+            key = (item['Обособленное подразделение'], item['Наименование должности'])
+            if key not in aggregated:
+                aggregated[key] = {
+                    'Всего': 0,
+                    'Слоты свободные для записи': 0
+                }
+            aggregated[key]['Всего'] += item['Всего']
+            aggregated[key]['Слоты свободные для записи'] += item['Слоты свободные для записи']
+        return aggregated
 
-        combined_df = pd.concat(filtered_dfs)
+    def merge_data(gr_1, gr_14):
+        merged = {}
+        all_keys = set(gr_1.keys()).union(set(gr_14.keys()))
+        for key in all_keys:
+            merged[key] = {
+                'Всего_1': gr_1.get(key, {}).get('Всего', 0),
+                'Слоты свободные для записи_1': gr_1.get(key, {}).get('Слоты свободные для записи', 0),
+                'Всего_14': gr_14.get(key, {}).get('Всего', 0),
+                'Слоты свободные для записи_14': gr_14.get(key, {}).get('Слоты свободные для записи', 0),
+            }
+        return merged
 
-        combined_df['Всего'] = pd.to_numeric(combined_df['Всего'], errors='coerce')
-        combined_df['Слоты свободные для записи'] = pd.to_numeric(combined_df['Слоты свободные для записи'], errors='coerce')
-
-        grouped_df = combined_df.groupby(['Обособленное подразделение', 'Наименование должности']).agg({
-            'Всего': 'sum',
-            'Слоты свободные для записи': 'sum'
-        }).reset_index()
-
-        return grouped_df
-
-    def union_df(gr_1, gr_14):
-        if gr_1.empty and gr_14.empty:
-            print("Both dataframes are empty.")
-            return pd.DataFrame()  # Return an empty DataFrame to avoid errors
-
-        merged_df = pd.merge(gr_14, gr_1, on=['Обособленное подразделение', 'Наименование должности'], how='outer', suffixes=('_14', '_1'))
-        merged_df[['Всего_14', 'Слоты свободные для записи_14', 'Всего_1', 'Слоты свободные для записи_1']] = merged_df[
-            ['Всего_14', 'Слоты свободные для записи_14', 'Всего_1', 'Слоты свободные для записи_1']
-        ].fillna(0)
-        merged_df['Всего_1'] = merged_df['Всего_1'].astype(int)
-        merged_df['Слоты свободные для записи_1'] = merged_df['Слоты свободные для записи_1'].astype(int)
-        merged_df['Дата и время обновления'] = report_dt.strftime('%H:%M %d.%m.%Y')
-        return merged_df
-
-    def save_registered_patients_from_dataframe(df):
+    def save_registered_patients_from_data(data, report_dt):
         RegisteredPatients.objects.all().delete()
-        for index, row in df.iterrows():
+        formatted_date = report_dt.strftime('%H:%M %d.%m.%Y')  # Форматируем дату
+        for key, values in data.items():
+            subdivision, speciality = key
             RegisteredPatients.objects.create(
-                subdivision=row['Обособленное подразделение'],
-                speciality=row['Наименование должности'],
-                slots_today=row['Всего_1'],
-                free_slots_today=row['Слоты свободные для записи_1'],
-                slots_14_days=row['Всего_14'],
-                free_slots_14_days=row['Слоты свободные для записи_14'],
-                report_datetime=row['Дата и время обновления']
+                subdivision=subdivision,
+                speciality=speciality,
+                slots_today=values['Всего_1'],
+                free_slots_today=values['Слоты свободные для записи_1'],
+                slots_14_days=values['Всего_14'],
+                free_slots_14_days=values['Слоты свободные для записи_14'],
+                report_datetime=formatted_date  # Используем отформатированную дату
             )
 
-    data = union_df(update_df(df_1), update_df(df_14))
-    if not data.empty:  # Only save if data is not empty
-        save_registered_patients_from_dataframe(data)
+    gr_1 = filter_and_group(TodayData)
+    gr_14 = filter_and_group(FourteenDaysData)
+
+    aggregated_gr_1 = aggregate_data(gr_1)
+    aggregated_gr_14 = aggregate_data(gr_14)
+
+    merged_data = merge_data(aggregated_gr_1, aggregated_gr_14)
+
+    if merged_data:
+        save_registered_patients_from_data(merged_data, report_dt)
     else:
         print("Нет данных для сохранения.")
 
 
 def upload_data(request):
     organization = Organization.objects.first()
-
     if request.method == 'POST':
         form = UploadDataForm(request.POST, request.FILES)
         if form.is_valid():
-            file_today = request.FILES['file_today']
-            file_buffer = io.BytesIO(file_today.read())
-            df_1 = pd.read_csv(file_buffer, encoding='cp1251', delimiter=';')
+            try:
+                # Очищаем таблицы перед загрузкой новых данных
+                TodayData.objects.all().delete()
+                FourteenDaysData.objects.all().delete()
 
-            file_14_days = request.FILES['file_14_days']
-            file_buffer = io.BytesIO(file_14_days.read())
-            df_14 = pd.read_csv(file_buffer, encoding='cp1251', delimiter=';')
+                messages.info(request, 'Данные в таблице "Сегодня" очищены.')
+                messages.info(request, 'Данные в таблице "14 дней" очищены.')
 
-            report_datetime = form.cleaned_data['report_datetime']
+                file_today = request.FILES['file_today']
+                df_today = pd.read_csv(io.BytesIO(file_today.read()), encoding='cp1251', delimiter=';')
 
-            process_transformer_files(df_1, df_14, report_datetime)
+                file_14_days = request.FILES['file_14_days']
+                df_14_days = pd.read_csv(io.BytesIO(file_14_days.read()), encoding='cp1251', delimiter=';')
 
-            messages.success(request, 'Данные успешно сохранены')
+                report_datetime = form.cleaned_data['report_datetime']
 
-            return redirect(request.META.get('HTTP_REFERER', 'upload_data'))
+                # Сохранение новых данных в модели
+                save_today_data(df_today, report_datetime)
+                save_fourteen_days_data(df_14_days, report_datetime)
 
+                messages.success(request, 'Данные за сегодня успешно сохранены.')
+                messages.success(request, 'Данные за 14 дней успешно сохранены.')
+
+                # Обработка данных и формирование отчета
+                process_transformer_files(report_datetime)
+                messages.success(request, 'Данные успешно обработаны и обновлены.')
+
+            except Exception as e:
+                # Ловим любые ошибки и выводим сообщение
+                messages.error(request, f'Произошла ошибка при обработке данных: {str(e)}')
+
+            return redirect('upload_data')
+        else:
+            messages.error(request, 'Ошибка в форме. Пожалуйста, проверьте данные и попробуйте снова.')
     else:
         form = UploadDataForm()
 
-    return render(request, 'peopledash/upload_data.html', {
-        'form': form,
-        'organization': organization
-    })
+    return render(request, 'peopledash/upload_data.html', {'form': form, 'organization': organization})

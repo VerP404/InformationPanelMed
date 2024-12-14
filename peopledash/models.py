@@ -2,7 +2,8 @@ from django.db import models
 
 
 class Building(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100, unique=True,
+                            verbose_name='Названия корпуса для группировки подразделений из Статистики Квазар')
 
     class Meta:
         verbose_name = "Корпус"
@@ -36,10 +37,14 @@ class Specialty(models.Model):
 
 
 class Page(models.Model):
-    title = models.CharField(max_length=100)
-    path = models.CharField(max_length=100, unique=True)
-    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='pages')
-    subdivision = models.CharField(max_length=100)
+    title = models.CharField(max_length=100,
+                             verbose_name='Заголовок. Показывает то что будет написано в списке подразделений на главной странице')
+    path = models.CharField(max_length=100, unique=True,
+                            verbose_name='Путь отображаемый в браузерной ссылке на страницу(на английском)')
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='pages',
+                                 verbose_name='Подключаем созданный корпус к страницу для отображения')
+    subdivision = models.CharField(max_length=100,
+                                   verbose_name='Подпись на странице корпуса. Должно быть такое же как и в подключенном корпусе выше!')
 
     class Meta:
         verbose_name = "Страница"
@@ -47,6 +52,40 @@ class Page(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class TodayData(models.Model):
+    organization = models.CharField(max_length=255)
+    subdivision = models.CharField(max_length=255)
+    speciality = models.CharField(max_length=255)
+    doctor_name = models.CharField(max_length=255)
+    reception_type = models.CharField(max_length=255)
+    total_slots = models.IntegerField()
+    epgu_slots = models.IntegerField()
+    free_slots = models.IntegerField()
+    free_epgu_slots = models.IntegerField()
+    report_datetime = models.DateTimeField()
+
+    class Meta:
+        verbose_name = "Данные за сегодня"
+        verbose_name_plural = "Данные за сегодня"
+
+
+class FourteenDaysData(models.Model):
+    organization = models.CharField(max_length=255)
+    subdivision = models.CharField(max_length=255)
+    speciality = models.CharField(max_length=255)
+    doctor_name = models.CharField(max_length=255)
+    reception_type = models.CharField(max_length=255)
+    total_slots = models.IntegerField()
+    epgu_slots = models.IntegerField()
+    free_slots = models.IntegerField()
+    free_epgu_slots = models.IntegerField()
+    report_datetime = models.DateTimeField()
+
+    class Meta:
+        verbose_name = "Данные за 14 дней"
+        verbose_name_plural = "Данные за 14 дней"
 
 
 class RegisteredPatients(models.Model):
@@ -67,13 +106,26 @@ class RegisteredPatients(models.Model):
 
 
 class Organization(models.Model):
-    name = models.CharField(max_length=255, unique=True, verbose_name='Краткое название')
-    full_name = models.CharField(max_length=255, verbose_name='Полное название')
+    name = models.CharField(max_length=255, unique=True,
+                            verbose_name='Название из файла Статистики Квазар для фильтрации')
+    full_name = models.CharField(max_length=255, verbose_name='Название для отображения в заголовке дашборда')
     logo = models.ImageField(upload_to='organization_logos/', verbose_name='Логотип')
+    # Кастомизация страниц
+    background_color = models.CharField(max_length=7, default='#4c4bc0', verbose_name='Цвет фона сайта')
+    text_color = models.CharField(max_length=7, default='white', verbose_name='Цвет текста в таблицах и блоке header')
+    main_container_color = models.CharField(max_length=7, default='#1f2c56',
+                                            verbose_name='Цвет фона контейнера с данными')
+    info_container_color = models.CharField(max_length=7, default='#1f2c56',
+                                            verbose_name='Цвет фона контейнера с доп. информацией')
+    info_container_texy_color = models.CharField(max_length=7, default='#02ff35',
+                                                 verbose_name='Цвет текста контейнера с доп. информацией')
+    header_background_color = models.CharField(max_length=7, default='#3fa134',
+                                               verbose_name='Цвет текста названий таблиц')
+    table_header_color = models.CharField(max_length=7, default='red', verbose_name='Цвет заголовков таблиц')
 
     def __str__(self):
         return self.name
 
     class Meta:
         verbose_name = 'Организация'
-        verbose_name_plural = 'Организации'
+        verbose_name_plural = 'Организация'

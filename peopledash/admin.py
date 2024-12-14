@@ -1,14 +1,18 @@
 from django.contrib import admin
 from django.utils.html import format_html
-
-from .models import Building, Subdivision, Specialty, Page, RegisteredPatients, Organization
+from django.db import models
+from .models import Building, Subdivision, Specialty, Page, RegisteredPatients, Organization, FourteenDaysData, \
+    TodayData
 
 
 class SubdivisionInline(admin.TabularInline):
     model = Subdivision
     extra = 1
     verbose_name = "Подразделение"
-    verbose_name_plural = "Подразделения"
+    verbose_name_plural = "Список подразделений из статистики квазара, относящихся к выбранному корпусу"
+    formfield_overrides = {
+        models.CharField: {'widget': admin.widgets.AdminTextInputWidget(attrs={'style': 'width: 500px;'})},
+    }
 
 
 @admin.register(Building)
@@ -18,15 +22,6 @@ class BuildingAdmin(admin.ModelAdmin):
     inlines = [SubdivisionInline]
     verbose_name = "Корпус"
     verbose_name_plural = "Корпуса"
-
-
-@admin.register(Subdivision)
-class SubdivisionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'building')
-    list_filter = ('building',)
-    search_fields = ('name', 'building__name')
-    verbose_name = "Подразделение"
-    verbose_name_plural = "Подразделения"
 
 
 @admin.register(Specialty)
@@ -49,8 +44,9 @@ class PageAdmin(admin.ModelAdmin):
 @admin.register(RegisteredPatients)
 class RegisteredPatientsAdmin(admin.ModelAdmin):
     list_display = (
-    'subdivision', 'speciality', 'slots_today', 'free_slots_today', 'slots_14_days', 'free_slots_14_days',
-    'report_datetime')
+        'subdivision', 'speciality', 'slots_today', 'free_slots_today', 'slots_14_days', 'free_slots_14_days',
+        'report_datetime'
+    )
     search_fields = ('subdivision', 'speciality', 'report_datetime')
     verbose_name = "Зарегистрированный пациент"
     verbose_name_plural = "Зарегистрированные пациенты"
@@ -67,3 +63,23 @@ class OrganizationAdmin(admin.ModelAdmin):
         return "(No logo)"
 
     logo_preview.short_description = "Предпросмотр логотипа"
+
+
+@admin.register(FourteenDaysData)
+class FourteenDaysDataAdmin(admin.ModelAdmin):
+    list_display = (
+    'organization', 'subdivision', 'speciality', 'doctor_name', 'reception_type', 'total_slots', 'epgu_slots',
+    'free_slots', 'free_epgu_slots', 'report_datetime')
+    search_fields = ('organization', 'subdivision', 'speciality', 'doctor_name', 'report_datetime')
+    verbose_name = "Данные за 14 дней"
+    verbose_name_plural = "Данные за 14 дней"
+
+
+@admin.register(TodayData)
+class TodayDataAdmin(admin.ModelAdmin):
+    list_display = (
+    'organization', 'subdivision', 'speciality', 'doctor_name', 'reception_type', 'total_slots', 'epgu_slots',
+    'free_slots', 'free_epgu_slots', 'report_datetime')
+    search_fields = ('organization', 'subdivision', 'speciality', 'doctor_name', 'report_datetime')
+    verbose_name = "Данные за сегодня"
+    verbose_name_plural = "Данные за сегодня"
